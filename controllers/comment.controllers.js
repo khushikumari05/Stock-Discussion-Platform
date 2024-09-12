@@ -7,7 +7,6 @@ exports.addComment = async (req, res) => {
     const { comment } = req.body;
     const { postId } = req.params;
 
-    // Find the post by ID
     const post = await Post.findById(postId);
     if (!post) {
       return res.status(404).json({ message: 'Post not found' });
@@ -43,13 +42,11 @@ exports.deleteComment = async (req, res) => {
   try {
     const { postId, commentId } = req.params;
 
-    // Find the post by ID
     const post = await Post.findById(postId);
     if (!post) {
       return res.status(404).json({ message: 'Post not found' });
     }
 
-    // Find the comment by ID
     const comment = await Comment.findById(commentId);
     if (!comment) {
       return res.status(404).json({ message: 'Comment not found' });
@@ -60,11 +57,9 @@ exports.deleteComment = async (req, res) => {
       return res.status(403).json({ message: 'Not authorized to delete this comment' });
     }
 
-    // Remove the comment from the post's comments array
     post.comments = post.comments.filter(cmt => cmt.toString() !== commentId);
     await post.save();
 
-    // Delete the comment from the database
     await comment.remove();
 
     res.status(200).json({
