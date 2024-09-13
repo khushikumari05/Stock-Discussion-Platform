@@ -5,6 +5,10 @@ exports.createPost = async (req, res) => {
   try {
     const { stockSymbol, title, description, tags } = req.body;
 
+    if (!stockSymbol || !title || !description) {
+      return res.status(400).json({ message: 'Stock symbol, title, and description are required' });
+    }
+
     const post = new Post({
       stockSymbol,
       title,
@@ -29,7 +33,7 @@ exports.createPost = async (req, res) => {
 // Includes pagination
 exports.getPosts = async (req, res) => {
   try {
-    const { stockSymbol, tags, sortBy, page = 1, limit = 10 } = req.query;
+    const { stockSymbol, tags, sortBy = 'createdAt', page = 1, limit = 10 } = req.query;
     let query = {};
 
     if (stockSymbol) {
@@ -44,7 +48,7 @@ exports.getPosts = async (req, res) => {
     const posts = await Post.find(query)
       .skip((page - 1) * limit)
       .limit(Number(limit))
-      .sort({ [sortBy || 'createdAt']: -1 });
+      .sort({ [sortBy]: -1 });
 
     const totalPosts = await Post.countDocuments(query);
 
@@ -88,7 +92,13 @@ exports.deletePost = async (req, res) => {
 exports.likePost = async (req, res) => {
   try {
     const post = await Post.findById(req.params.postId);
-    post.likes += 1;
+
+    if (!post) {
+      return res.status(404).json({ message: 'Post not found' });
+    }
+    
+    post.likes = (post.likes || 0) + 1;
+
     await post.save();
     res.json({ success: true, message: 'Post liked' });
   } catch (err) {
@@ -99,7 +109,13 @@ exports.likePost = async (req, res) => {
 exports.unlikePost = async (req, res) => {
   try {
     const post = await Post.findById(req.params.postId);
-    post.likes -= 1;
+
+    if (!post) {
+      return res.status(404).json({ message: 'Post not found' });
+    }
+    
+    post.likes = Math.max((post.likes || 1) - 1, 0);
+
     await post.save();
     res.json({ success: true, message: 'Post unliked' });
   } catch (err) {
